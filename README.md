@@ -1,38 +1,38 @@
-OpenSymbols
----------------------------
-[![OpenAAC](https://www.openaac.org/images//OpenAAC-advocate-blue.svg)](https://www.openaac.org/advocates.html)
+# create-svelte
 
-OpenSymbols is a ruby (Rails) server that makes it easy to collect 
-and search
-through multiple image repositories. It's built around the idea of
-aggregating open-licensed picture symbols for AAC. It can search
-local and remote repositories.
+Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/master/packages/create-svelte).
 
-You can see the site live at https://www.opensymbols.org
+## Creating a project
 
-## Setup
+If you're seeing this, you've probably already done this step. Congrats!
 
-All local repositories need to be in the same S3 bucket and in a 
-subfolder `/libraries`. They will also need a `manifest.json` file
-that includes basic repository information. All the files in each
-repository including manifest.json should be publicly available.
+```bash
+# create a new project in the current directory
+npm create svelte@latest
 
-Once you have your repositories set up you can add them to your
-site by executing the following command from the console on your
-server or local computer:
-
-```ruby
-SymbolRepository.retrieve_from_manifest('<repository_folder>')
+# create a new project in my-app
+npm create svelte@latest my-app
 ```
 
-You'll need to set the environment variable, `S3_BUCKET=<yourbucketname>`
-before the app will run. You can use the dotenv gem to easily set this
-in development environments by editing the `.env` file (this option can work 
-in production too, but it's not set that way by default).
+## Developing
 
-You can check out a couple different `manifest.json` files in the
-`/examples` folder of the project.
+Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
 
-## License
+```bash
+npm run dev
 
-Licensed under the MIT License.
+# or start the server and open the app in a new browser tab
+npm run dev -- --open
+```
+
+## Building
+
+To create a production version of your app:
+
+```bash
+npm run build
+```
+
+You can preview the production build with `npm run preview`.
+
+> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
