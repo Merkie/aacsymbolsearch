@@ -4,28 +4,19 @@ import Fuse from 'fuse.js';
 export const GET = async ({ url, fetch }) => {
 	const params = url.searchParams;
 	const query = params.get('query');
-	const provider = params.get('provider');
+	const page = parseInt(params.get('page') || '0');
+	// const provider = params.get('provider');
 
 	if (!query) return json({ error: 'No query provided' });
 
-	const results: {
-		arasaac: unknown[];
-	} = {
-		arasaac: []
-	};
+	const symbols = await fetch('/symbols.json').then((res) => res.json());
 
-	const ArasaacSymbols = await fetch('/symbols.json').then((res) => res.json());
-
-	// console.log(ArasaacSymbols);
-
-	if (provider === 'arasaac' || !provider) {
-		const arasaacFuse = new Fuse(ArasaacSymbols, {
-			keys: ['keywords']
-		});
-		results.arasaac = arasaacFuse.search(query).map((result) => result.item);
-	}
+	const fuse = new Fuse(symbols, {
+		keys: ['keywords']
+	});
+	const results = fuse.search(query).map((result) => result.item);
 
 	return json({
-		results: [...results.arasaac].slice(0, 100)
+		results: results.slice(page * 100, page * 100 + 100)
 	});
 };
