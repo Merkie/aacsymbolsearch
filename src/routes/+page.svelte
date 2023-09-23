@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
 	import { fly, scale } from 'svelte/transition';
 
@@ -7,6 +8,8 @@
 	let results = data.initialResults;
 
 	let query = '';
+	const defaultQuery = 'me';
+
 	let page = 0;
 
 	let loadingMoreResults = false;
@@ -33,21 +36,6 @@
 		}
 	];
 
-	const resultToUrl = (result: any) => {
-		if (result.provider === 'mulberry')
-			return `https://cdn.aacsymbolsearch.com/mulberry/${result.id.slice(9)}.svg`;
-		if (result.provider === 'arasaac')
-			return `https://cdn.aacsymbolsearch.com/arasaac/${
-				result.id.split('-')[1]
-			}-${result.keywords[0].replace(/[^a-zA-Z0-9\s]/g, '-')}${result.skin ? '-white' : ''}${
-				result.hair ? '-brown' : ''
-			}.png`;
-		if (result.provider === 'picto')
-			return `https://cdn.aacsymbolsearch.com/picto/${result.id
-				.replaceAll('.PNG', '')
-				.slice(6)}.png`;
-	};
-
 	onMount(() => {
 		window.addEventListener('scroll', async () => {
 			if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500) {
@@ -55,7 +43,11 @@
 					loadingMoreResults = true;
 					page++;
 					const resJson = await fetch(
-						`/api/v1/search?query=${encodeURIComponent(query)}?query=${query || 'me'}&page=${page}`
+						`/api/v1/search?query=${encodeURIComponent(query)}?query=${
+							query.length > 1 ? query : defaultQuery
+						}&page=${page}&provider=${providers
+							.map((p) => (p.enabled ? p.id : null))
+							.filter((p) => !!p)}&nsfw=${filterResults ? 'true' : 'false'}`
 					)
 						.then((res) => res.json())
 						.catch((err) => console.error(err));
@@ -67,13 +59,24 @@
 		});
 	});
 
-	$: results = results.filter((result: any) => {
-		if (filterResults) {
-			if (result.violence || result.sex) return false;
-		}
-		if (!providers.find((provider) => provider.id === result.provider)?.enabled) return false;
-		return true;
-	});
+	const refreshResults = async () => {
+		results = [];
+		const resJson = await fetch(
+			`/api/v1/search?query=${encodeURIComponent(
+				query.length > 1 ? query : defaultQuery
+			)}&provider=${providers.map((p) => (p.enabled ? p.id : null)).filter((p) => !!p)}&nsfw=${
+				filterResults ? 'false' : 'true'
+			}`
+		)
+			.then((res) => res.json())
+			.catch((err) => console.error(err));
+		if (resJson.results) results = resJson.results;
+	};
+
+	$: {
+		if (browser) refreshResults();
+		[query, providers, filterResults];
+	}
 </script>
 
 <div class="p-4 flex gap-4">
@@ -82,13 +85,6 @@
 	>
 		<i class="bi bi-search p-2 pl-4" />
 		<input
-			on:input={async () => {
-				results = [];
-				const resJson = await fetch(`/api/v1/search?query=${encodeURIComponent(query)}`)
-					.then((res) => res.json())
-					.catch((err) => console.error(err));
-				if (resJson.results) results = resJson.results;
-			}}
 			bind:value={query}
 			placeholder={`Search 27,976 symbols...`}
 			type="text"
@@ -122,7 +118,10 @@
 			>
 				{#each providers as provider}
 					<button
-						on:click={() => (provider.enabled = !provider.enabled)}
+						on:click={() => {
+							if (providers.filter((p) => p.enabled).length === 1 && provider.enabled) return;
+							provider.enabled = !provider.enabled;
+						}}
 						class="flex gap-2 items-center p-2 justify-between"
 					>
 						<p>{provider.name}</p>
@@ -171,7 +170,7 @@
 					//@ts-ignore
 					results = results.filter((r) => r.id !== result.id);
 				}}
-				src={resultToUrl(result)}
+				src={result.cdn}
 				alt="symbol"
 			/>
 		</div>
