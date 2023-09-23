@@ -1,3 +1,4 @@
+import type { SymbolResult } from '$lib/types.js';
 import { json } from '@sveltejs/kit';
 import Fuse from 'fuse.js';
 
@@ -17,14 +18,7 @@ export const GET = async ({ url, fetch }) => {
 	const fuse = new Fuse(symbols, {
 		keys: ['keywords']
 	});
-	let results = fuse.search(query).map((result) => result.item) as {
-		provider: string;
-		sex: boolean;
-		violence: boolean;
-		skin: boolean;
-		hair: boolean;
-		cdn: string;
-	}[];
+	let results = fuse.search(query).map((result) => result.item) as SymbolResult[];
 
 	// filter based on provider
 	if (provider && provider?.split(',').length > 0) {
