@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { hairColors, skinColors } from '$lib/arasaac_colors';
+	import providers from '$lib/symbol_providers';
+
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
 	import { fly, scale } from 'svelte/transition';
@@ -7,75 +10,72 @@
 
 	let results = data.initialResults;
 
+	// Loading and infinite scroll state
+	let loadingMoreResults = false;
+	let noMoreResultsForQuery = false;
+	let page = 0;
+
+	// Open/Closed UI state
+	let providersFilterOpen = false;
+	let colorOptionsOpen = false;
+
+	// Query state
 	let query = '';
 	const defaultQuery = 'me';
 
-	let page = 0;
-
-	let loadingMoreResults = false;
-	let finishedLoading = false;
-
+	// Filter state
 	let filterResults = true;
-	let providersFilterOpen = false;
+	let selectedProviders = ['arasaac', 'mulberry', 'picto'];
 
-	let providers = [
-		{
-			name: 'Arasaac',
-			id: 'arasaac',
-			enabled: true
-		},
-		{
-			name: 'Mulberry',
-			id: 'mulberry',
-			enabled: true
-		},
-		{
-			name: 'Sclera Picto',
-			id: 'picto',
-			enabled: true
-		}
-	];
+	// Color option state
+	let selectedSkinColor = 'white';
+	let selectedHairColor = 'black';
 
+	// Infinate Scroll
 	onMount(() => {
 		window.addEventListener('scroll', async () => {
 			if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500) {
-				if (!loadingMoreResults && !finishedLoading) {
+				if (!loadingMoreResults && !noMoreResultsForQuery) {
 					loadingMoreResults = true;
 					page++;
-					const resJson = await fetch(
-						`/api/v1/search?query=${encodeURIComponent(query)}?query=${
-							query.length > 1 ? query : defaultQuery
-						}&page=${page}&provider=${providers
-							.map((p) => (p.enabled ? p.id : null))
-							.filter((p) => !!p)}&nsfw=${filterResults ? 'true' : 'false'}`
-					)
-						.then((res) => res.json())
-						.catch((err) => console.error(err));
-					if (resJson.results.length === 0) finishedLoading = true;
-					if (resJson.results) results = [...results, ...resJson.results];
+					const fetchedResults = await fetchResults();
+					if (fetchedResults.length === 0) {
+						noMoreResultsForQuery = true;
+					} else {
+						results = [...results, ...fetchedResults];
+					}
 					loadingMoreResults = false;
 				}
 			}
 		});
 	});
 
-	const refreshResults = async () => {
-		results = [];
-		const resJson = await fetch(
-			`/api/v1/search?query=${encodeURIComponent(
-				query.length > 1 ? query : defaultQuery
-			)}&provider=${providers.map((p) => (p.enabled ? p.id : null)).filter((p) => !!p)}&nsfw=${
-				filterResults ? 'false' : 'true'
-			}`
-		)
+	// Fetch results, doesn't update state itself
+	const fetchResults = async () => {
+		const endpoint = new URL('/api/v1/search', window.location.origin);
+		const params = {
+			query: query.length > 1 ? query : defaultQuery,
+			provider: selectedProviders.join(','),
+			nsfw: filterResults ? 'false' : 'true',
+			skin: selectedSkinColor,
+			hair: selectedHairColor,
+			page
+		};
+		// @ts-ignore
+		Object.keys(params).forEach((key) => endpoint.searchParams.append(key, params[key]));
+		const resJson = await fetch(endpoint)
 			.then((res) => res.json())
 			.catch((err) => console.error(err));
-		if (resJson.results) results = resJson.results;
+		return resJson.results || [];
 	};
 
+	// Reset results whenever some critial state changes
 	$: {
-		if (browser) refreshResults();
-		[query, providers, filterResults];
+		if (browser) {
+			results = [];
+			fetchResults().then((res) => (results = res));
+		}
+		[query, filterResults, selectedProviders, selectedSkinColor, selectedHairColor];
 	}
 </script>
 
@@ -97,15 +97,15 @@
 			class="bg-zinc-50 border border-zinc-300 shadow-sm flex rounded-md p-2 px-4"
 		>
 			<p class="pr-16">
-				{providers.filter((p) => p.enabled).length === providers.length
+				{selectedProviders.length === providers.length
 					? 'All Providers'
 					: // if all providers are disabled
-					providers.filter((p) => p.enabled).length === 0
+					selectedProviders.length === 0
 					? 'No Providers'
 					: // if some providers are enabled
 					  'Providers: ' +
 					  providers
-							.filter((p) => p.enabled)
+							.filter((p) => selectedProviders.includes(p.id))
 							.map((p) => p.name)
 							.join(', ')}
 			</p>
@@ -119,18 +119,24 @@
 				{#each providers as provider}
 					<button
 						on:click={() => {
-							if (providers.filter((p) => p.enabled).length === 1 && provider.enabled) return;
-							provider.enabled = !provider.enabled;
+							if (selectedProviders.includes(provider.id)) {
+								if (selectedProviders.length === 1) return;
+								selectedProviders = selectedProviders.filter((p) => p !== provider.id);
+							} else {
+								selectedProviders = [...selectedProviders, provider.id];
+							}
 						}}
 						class="flex gap-2 items-center p-2 justify-between"
 					>
 						<p>{provider.name}</p>
 						<div
 							class={`w-[20px] h-[20px] text-blue-50 relative rounded-md border-2 transition-all ${
-								provider.enabled ? 'bg-blue-500 border-transparent' : ' border-zinc-500'
+								selectedProviders.includes(provider.id)
+									? 'bg-blue-500 border-transparent'
+									: ' border-zinc-500'
 							}`}
 						>
-							{#if provider.enabled}
+							{#if selectedProviders.includes(provider.id)}
 								<i
 									transition:scale
 									class="bi bi-check text-2xl absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
@@ -159,22 +165,55 @@
 			</div>
 		</button>
 	</div>
+	<button class="p-2" on:click={() => (colorOptionsOpen = !colorOptionsOpen)}>
+		<i class="bi bi-three-dots" />
+	</button>
 </div>
-<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-2 p-4 pt-0">
-	{#each results as result (result.id)}
-		<div
-			class="p-2 bg-zinc-100 border border-zinc-300 rounded-md hover:cursor-pointer hover:shadow-md"
-		>
-			<img
-				on:error={() => {
-					//@ts-ignore
-					results = results.filter((r) => r.id !== result.id);
-				}}
-				src={result.cdn}
-				alt="symbol"
-			/>
+{#if colorOptionsOpen}
+	<div class="px-4 pb-4 items-center flex gap-2">
+		<p>Skin Color:</p>
+		<div class="p-2 flex gap-2 bg-zinc-50 rounded-md border border-zinc-300">
+			{#each skinColors as skinColor}
+				<button
+					on:click={() => {
+						selectedSkinColor = skinColor.name;
+					}}
+					class="w-[50px] h-[25px] rounded-sm"
+					style={`background-color: ${skinColor.hex}`}
+				/>
+			{/each}
 		</div>
-	{/each}
+		<p class="ml-4">Hair Color:</p>
+		<div class="p-2 flex gap-2 bg-zinc-50 rounded-md border border-zinc-300">
+			{#each hairColors as hairColor}
+				<button
+					on:click={() => {
+						selectedHairColor = hairColor.name;
+					}}
+					class="w-[50px] h-[25px] rounded-sm"
+					style={`background-color: ${hairColor.hex}`}
+				/>
+			{/each}
+		</div>
+	</div>
+{/if}
+<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-2 p-4 pt-0">
+	{#key [selectedHairColor, selectedSkinColor]}
+		{#each results as result (result.id)}
+			<div
+				class="p-2 bg-zinc-100 border border-zinc-300 rounded-md hover:cursor-pointer hover:shadow-md"
+			>
+				<img
+					on:error={() => {
+						//@ts-ignore
+						results = results.filter((r) => r.id !== result.id);
+					}}
+					src={result.cdn}
+					alt="symbol"
+				/>
+			</div>
+		{/each}
+	{/key}
 </div>
 
 <style lang="postcss">

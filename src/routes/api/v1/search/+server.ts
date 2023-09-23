@@ -7,6 +7,8 @@ export const GET = async ({ url, fetch }) => {
 	const page = parseInt(params.get('page') || '0');
 	const provider = params.get('provider');
 	const nsfw = params.get('nsfw');
+	const skin = params.get('skin');
+	const hair = params.get('hair');
 
 	if (!query) return json({ error: 'No query provided' });
 
@@ -19,6 +21,9 @@ export const GET = async ({ url, fetch }) => {
 		provider: string;
 		sex: boolean;
 		violence: boolean;
+		skin: boolean;
+		hair: boolean;
+		cdn: string;
 	}[];
 
 	// filter based on provider
@@ -30,6 +35,21 @@ export const GET = async ({ url, fetch }) => {
 	if (nsfw === 'false') {
 		results = results.filter((result) => !result.sex && !result.violence);
 	}
+
+	// adjust skin and hair
+	if (skin || hair) {
+		results = results.map((result) => {
+			let url = result.cdn;
+			if (result.skin && !result.hair) url = url.replace('-white.', `-${skin}.`);
+			if (result.hair && !result.skin) url = url.replace('-brown.', `-${hair}.`);
+			if (result.hair && result.skin) url = url.replace('-white-brown.', `-${skin}-${hair}.`);
+			return {
+				...result,
+				cdn: url
+			};
+		});
+	}
+
 	return json({
 		results: results.slice(page * 100, page * 100 + 100)
 	});
