@@ -11,7 +11,7 @@
 <div class="relative">
 	<button
 		on:click={() => (providersFilterOpen = !providersFilterOpen)}
-		class="bg-zinc-50 border border-zinc-300 shadow-sm flex rounded-md p-2 px-4"
+		class={`bg-zinc-50 border border-zinc-300 shadow-sm flex rounded-md p-2 px-4`}
 	>
 		<p class="pr-16">
 			{selectedProviders.length === providers.length
@@ -31,7 +31,7 @@
 	{#if providersFilterOpen}
 		<div
 			transition:fly={{ y: 20, duration: 200 }}
-			class="bg-zinc-50 w-[250px] border border-zinc-300 shadow-sm flex flex-col rounded-md p-2 absolute -bottom-[10px] translate-y-[100%] right-0"
+			class={`bg-zinc-50 border border-zinc-300 shadow-sm flex flex-col rounded-md p-2 absolute -bottom-[10px] translate-y-[100%] right-0`}
 		>
 			{#each providers as provider}
 				<button

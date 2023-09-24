@@ -16,7 +16,7 @@
 	let page = 0;
 
 	// Open/Closed UI state
-	let colorOptionsOpen = false;
+	let advancedOptionsOpen = false;
 
 	// Query state
 	let query = '';
@@ -28,7 +28,7 @@
 
 	// Color option state
 	let selectedSkinColor = 'white';
-	let selectedHairColor = 'black';
+	let selectedHairColor = 'brown';
 
 	// Infinate Scroll
 	onMount(() => {
@@ -78,7 +78,7 @@
 	}
 </script>
 
-<div class="p-4 flex gap-4">
+<div class="p-4 flex gap-4 bg-zinc-200">
 	<div
 		class="bg-zinc-50 border border-zinc-300 shadow-sm flex rounded-md focus-within:ring-2 flex-1"
 	>
@@ -107,19 +107,24 @@
 			filterResults = !filterResults;
 		}}
 	/>
-	<button class="p-2" on:click={() => (colorOptionsOpen = !colorOptionsOpen)}>
+	<button class="p-2" on:click={() => (advancedOptionsOpen = !advancedOptionsOpen)}>
 		<i class="bi bi-three-dots" />
 	</button>
 </div>
-{#if colorOptionsOpen}
-	<SymbolColorPicker
-		onHairColorPick={(color) => {
-			selectedHairColor = color;
-		}}
-		onSkinColorPick={(color) => {
-			selectedSkinColor = color;
-		}}
-	/>
+{#if advancedOptionsOpen}
+	<div class="flex items-center pb-4">
+		<SymbolColorPicker
+			{selectedSkinColor}
+			{selectedHairColor}
+			onHairColorPick={(color) => {
+				selectedHairColor = color;
+			}}
+			onSkinColorPick={(color) => {
+				selectedSkinColor = color;
+			}}
+		/>
+		<button class="hover:underline">Copy API Link</button>
+	</div>
 {/if}
 <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-2 p-4 pt-0">
 	{#key [selectedHairColor, selectedSkinColor]}
@@ -133,9 +138,3 @@
 		{/each}
 	{/key}
 </div>
-
-<style lang="postcss">
-	:global(html) {
-		@apply bg-zinc-200;
-	}
-</style>
