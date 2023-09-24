@@ -16,7 +16,7 @@ export const GET = async ({ url, fetch }) => {
 	const symbols = await fetch('/symbols.json').then((res) => res.json());
 
 	const fuse = new Fuse(symbols, {
-		keys: ['keywords']
+		keys: ['keywords', 'tags']
 	});
 	let results = fuse.search(query).map((result) => result.item) as SymbolResult[];
 

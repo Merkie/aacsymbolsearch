@@ -82,13 +82,16 @@
 		return resJson.results || [];
 	};
 
+	const resetResults = () => {
+		page = 0;
+		results = [];
+		fetchResults().then((res) => (results = res));
+	};
+
 	// Reset results whenever some critial state changes
 	$: {
-		if (browser) {
-			results = [];
-			fetchResults().then((res) => (results = res));
-		}
-		[query, filterResults, selectedProviders, selectedSkinColor, selectedHairColor];
+		if (browser) resetResults();
+		[filterResults, selectedProviders, selectedSkinColor, selectedHairColor];
 	}
 </script>
 
@@ -103,6 +106,7 @@
 		<i class="bi bi-search p-2 pl-4" />
 		<input
 			bind:value={query}
+			on:change={resetResults}
 			placeholder={`Search 27,976 symbols...`}
 			type="text"
 			class="p-2 outline-none flex-1 bg-transparent"
