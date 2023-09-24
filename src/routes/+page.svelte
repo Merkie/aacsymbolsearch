@@ -7,6 +7,7 @@
 	import SymbolNudityViolenceFilter from '$lib/components/SymbolNudityViolenceFilter.svelte';
 	import SymbolModal from '$lib/components/SymbolModal.svelte';
 	import APIModal from '$lib/components/APIModal.svelte';
+	import Loader from '$lib/components/Loader.svelte';
 	import github from 'svelte-highlight/styles/github-dark';
 
 	export let data;
@@ -148,6 +149,11 @@
 		<button on:click={() => (apiString = getRequestUrl() + '')} class="hover:underline"
 			>View API Code</button
 		>
+	</div>
+{/if}
+{#if results.length === 0}
+	<div class="flex justify-center">
+		<Loader />
 	</div>
 {/if}
 <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-2 p-4 pt-0">
