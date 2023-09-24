@@ -5,6 +5,9 @@
 	import SymbolColorPicker from '$lib/components/SymbolColorPicker.svelte';
 	import SymbolProvidersPicker from '$lib/components/SymbolProvidersPicker.svelte';
 	import SymbolNudityViolenceFilter from '$lib/components/SymbolNudityViolenceFilter.svelte';
+	import SymbolModal from '$lib/components/SymbolModal.svelte';
+	import APIModal from '$lib/components/APIModal.svelte';
+	import github from 'svelte-highlight/styles/github-dark';
 
 	export let data;
 
@@ -30,6 +33,12 @@
 	let selectedSkinColor = 'white';
 	let selectedHairColor = 'brown';
 
+	// Symbol Modal state
+	let selectedSymbol: string | null = null;
+
+	// API Modal state
+	let apiString: string | null = null;
+
 	// Infinate Scroll
 	onMount(() => {
 		window.addEventListener('scroll', async () => {
@@ -49,8 +58,7 @@
 		});
 	});
 
-	// Fetch results, doesn't update state itself
-	const fetchResults = async () => {
+	const getRequestUrl = () => {
 		const endpoint = new URL('/api/v1/search', window.location.origin);
 		const params = {
 			query: query.length > 1 ? query : defaultQuery,
@@ -62,6 +70,12 @@
 		};
 		// @ts-ignore
 		Object.keys(params).forEach((key) => endpoint.searchParams.append(key, params[key]));
+		return endpoint;
+	};
+
+	// Fetch results, doesn't update state itself
+	const fetchResults = async () => {
+		const endpoint = getRequestUrl();
 		const resJson = await fetch(endpoint)
 			.then((res) => res.json())
 			.catch((err) => console.error(err));
@@ -77,6 +91,10 @@
 		[query, filterResults, selectedProviders, selectedSkinColor, selectedHairColor];
 	}
 </script>
+
+<svelte:head>
+	{@html github}
+</svelte:head>
 
 <div class="p-4 flex gap-4 bg-zinc-200">
 	<div
@@ -123,7 +141,9 @@
 				selectedSkinColor = color;
 			}}
 		/>
-		<button class="hover:underline">Copy API Link</button>
+		<button on:click={() => (apiString = getRequestUrl() + '')} class="hover:underline"
+			>View API Code</button
+		>
 	</div>
 {/if}
 <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-2 p-4 pt-0">
@@ -134,7 +154,13 @@
 				onError={() => {
 					results = results.filter((r) => r.id !== result.id);
 				}}
+				onClick={(link) => {
+					selectedSymbol = link;
+				}}
 			/>
 		{/each}
 	{/key}
 </div>
+
+<SymbolModal closeModal={() => (selectedSymbol = null)} {selectedSymbol} />
+<APIModal closeModal={() => (apiString = null)} {apiString} />
