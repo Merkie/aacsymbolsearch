@@ -73,7 +73,7 @@
 		<div
 			in:scale
 			out:scale={{ duration: 200 }}
-			class="bg-zinc-200 border border-zinc-300 rounded-md p-4 flex flex-col"
+			class="bg-zinc-200 border border-zinc-300 rounded-md p-4 flex flex-col max-w-[90%] overflow-x-auto"
 		>
 			<div class="flex items-center pb-4 gap-2">
 				<p class=" text-xl">API Code:</p>

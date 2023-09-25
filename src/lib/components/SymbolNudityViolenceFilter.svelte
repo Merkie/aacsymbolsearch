@@ -7,7 +7,7 @@
 
 <div class="flex">
 	<button on:click={onFilterToggle} class="flex gap-2 items-center">
-		<p>Filter Nudity and Violence</p>
+		<p class="whitespace-nowrap text-ellipsis text-sm md:text-base">Filter Nudity and Violence</p>
 		<div
 			class={`w-[20px] h-[20px] text-blue-50 relative rounded-md border-2 transition-all ${
 				filterResults ? 'bg-blue-500 border-transparent' : ' border-zinc-500'

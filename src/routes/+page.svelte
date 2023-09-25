@@ -100,9 +100,23 @@
 	{@html github}
 </svelte:head>
 
-<div class="p-4 flex gap-4 bg-zinc-200">
+<div class="p-2">
 	<div
-		class="bg-zinc-50 border border-zinc-300 shadow-sm flex rounded-md focus-within:ring-2 flex-1"
+		class="bg-zinc-50 border text-sm border-zinc-300 shadow-sm md:hidden mb-0 rounded-md focus-within:ring-2 flex-1 flex"
+	>
+		<i class="bi bi-search p-2 pl-4" />
+		<input
+			bind:value={query}
+			on:change={resetResults}
+			placeholder={`Search 27,976 symbols...`}
+			type="text"
+			class="p-2 outline-none flex-1 bg-transparent"
+		/>
+	</div>
+</div>
+<div class="p-2 pb-4 md:p-4 flex md:gap-4 gap-2 bg-zinc-200">
+	<div
+		class="bg-zinc-50 border border-zinc-300 shadow-sm md:flex rounded-md focus-within:ring-2 flex-1 hidden"
 	>
 		<i class="bi bi-search p-2 pl-4" />
 		<input
@@ -135,7 +149,7 @@
 	</button>
 </div>
 {#if advancedOptionsOpen}
-	<div class="flex items-center pb-4">
+	<div class="flex md:items-center md:px-4 px-2 pb-4 flex-col md:flex-row gap-2">
 		<SymbolColorPicker
 			{selectedSkinColor}
 			{selectedHairColor}
@@ -146,7 +160,9 @@
 				selectedSkinColor = color;
 			}}
 		/>
-		<button on:click={() => (apiString = getRequestUrl() + '')} class="hover:underline"
+		<button
+			on:click={() => (apiString = getRequestUrl() + '')}
+			class="hover:underline text-sm md:text-base whitespace-nowrap md:ml-2 text-left md:text-center"
 			>View API Code</button
 		>
 	</div>
@@ -156,7 +172,7 @@
 		<Loader />
 	</div>
 {/if}
-<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-2 p-4 pt-0">
+<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-2 p-2 md:p-4 pt-0">
 	{#key [selectedHairColor, selectedSkinColor]}
 		{#each results as result (result.id)}
 			<SymbolCard
@@ -171,6 +187,5 @@
 		{/each}
 	{/key}
 </div>
-
 <SymbolModal closeModal={() => (selectedSymbol = null)} {selectedSymbol} />
 <APIModal closeModal={() => (apiString = null)} {apiString} />
